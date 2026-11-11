@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="cs" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PC Health & Guard Pro</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            900: '#0b0f19',
+                            800: '#111827',
+                            700: '#1f2937',
+                            600: '#374151',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Font Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #111827; }
+        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+        .glow { box-shadow: 0 0 20px rgba(59, 130, 246, 0.15); }
+        .glow-red { box-shadow: 0 0 20px rgba(239, 68, 68, 0.15); }
+        .glow-green { box-shadow: 0 0 20px rgba(16, 185, 129, 0.15); }
+    </style>
+</head>
+<body class="bg-dark-900 text-gray-100 min-h-screen flex flex-col antialiased selection:bg-blue-500 selection:text-white">
+
+    <!-- Notification Toast Container -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-3"></div>
+
+    <!-- Top Header Navigation -->
+    <header class="bg-dark-800/80 backdrop-blur border-b border-gray-800 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                    <i class="fa-solid fa-shield-halved text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg tracking-tight bg-gradient-to-r from-blue-400 to-indigo-300 bg-clip-text text-transparent">PC Health & Guard Pro</h1>
+                    <p class="text-xs text-gray-400">Kontrola zdraví počítače, souborů a programů</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <div class="hidden md:flex items-center space-x-2 bg-dark-700/50 px-3 py-1.5 rounded-full border border-gray-700/50 text-xs">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span class="text-gray-300 font-medium">Počítač je v pořádku a chráněný</span>
+                </div>
+                <button onclick="switchTab('diagnostika')" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-lg shadow-blue-600/20 flex items-center space-x-2">
+                    <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                    <span>Zkontrolovat PC</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Navigation Tabs -->
+    <nav class="bg-dark-800/40 border-b border-gray-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-1 sm:space-x-4 overflow-x-auto py-2">
+            <button onclick="switchTab('prehled')" id="nav-prehled" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium transition flex items-center space-x-2 bg-blue-600/20 text-blue-400 border border-blue-500/30">
+                <i class="fa-solid fa-house"></i>
+                <span>Hlavní přehled</span>
+            </button>
+            <button onclick="switchTab('diagnostika')" id="nav-diagnostika" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium transition flex items-center space-x-2 text-gray-400 hover:text-gray-200 hover:bg-dark-700/50">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <span>Kontrola souborů a programů</span>
+            </button>
+            <button onclick="switchTab('hardware')" id="nav-hardware" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium transition flex items-center space-x-2 text-gray-400 hover:text-gray-200 hover:bg-dark-700/50">
+                <i class="fa-solid fa-microchip"></i>
+                <span>Součástky PC (Hardware)</span>
+            </button>
+            <button onclick="switchTab('software')" id="nav-software" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium transition flex items-center space-x-2 text-gray-400 hover:text-gray-200 hover:bg-dark-700/50">
+                <i class="fa-solid fa-window-maximize"></i>
+                <span>Windows a programy</span>
+            </button>
+            <button onclick="switchTab('sprava')" id="nav-sprava" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium transition flex items-center space-x-2 text-gray-400 hover:text-gray-200 hover:bg-dark-700/50">
+                <i class="fa-solid fa-shield-check"></i>
+                <span>Povolené a blokované</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- TAB 1: PŘEHLED -->
+        <section id="tab-prehled" class="tab-content space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <!-- Health Score Card -->
+                <div class="bg-dark-800 border border-gray-800 rounded-2xl p-5 flex flex-col justify-between glow">
+                    <div class="flex items-center justify-between text-gray-400">
+                        <span class="text-xs uppercase tracking-wider font-semibold">Celkový stav počítače</span>
+                        <i class="fa-solid fa-heart-pulse text-emerald-400"></i>
+                    </div>
+                    <div class="my-4 flex items-baseline space-x-2">
+                        <span id="overview-score" class="text-4xl font-extrabold text-emerald-400">96%</span>
+                        <span class="text-gray-400 text-sm">Výborný stav</span>
+                    </div>
+                    <div class="w-full bg-dark-700 rounded-full h-2 overflow-hidden">
+                        <div class="bg-emerald-500 h-full rounded-full transition-all duration-500" style="width: 96%"></div>
+                    </div>
+                </div>
+
+                <!-- CPU Status Card -->
+                <div class="bg-dark-800 border border-gray-800 rounded-2xl p-5 flex flex-col justify-between">
+                    <div class="flex items-center justify-between text-gray-400">
+                        <span class="text-xs uppercase tracking-wider font-semibold">Procesor (Mozek PC)</span>
+                        <i class="fa-solid fa-microchip text-blue-400"></i>
+                    </div>
+                    <div class="my-4 flex items-baseline space-x-2">
+                        <span id="overview-cpu" class="text-3xl font-bold text-gray-100">18%</span>
+                        <span class="text-xs text-blue-400">Využití výkonu</span>
+                    </div>
+                    <div class="w-full bg-dark-700 rounded-full h-2 overflow-hidden">
+                        <div id="bar-cpu" class="bg-blue-500 h-full rounded-full transition-all duration-300" style="width: 18%"></div>
+                    </div>
+                </div>
+
+                <!-- RAM Status Card -->
+                <div class="bg-dark-800 border border-gray-800 rounded-2xl p-5 flex flex-col justify-between">
+                    <div class="flex items-center justify-between text-gray-400">
+                        <span class="text-xs uppercase tracking-wider font-semibold">Operační paměť (RAM)</span>
+                        <i class="fa-solid fa-memory text-indigo-400"></i>
+                    </div>
+                    <div class="my-4 flex items-baseline space-x-2">
+                        <span id="overview-ram" class="text-3xl font-bold text-gray-100">6.2</span>
+                        <span class="text-gray-400 text-sm">/ 16 GB volných</span>
+                    </div>
+                    <div class="w-full bg-dark-700 rounded-full h-2 overflow-hidden">
+                        <div id="bar-ram" class="bg-indigo-500 h-full rounded-full transition-all duration-300" style="width: 38%"></div>
+                    </div>
+                </div>
+
+                <!-- Disk Status Card -->
+                <div class="bg-dark-800 border border-gray-800 rounded-2xl p-5 flex flex-col justify-between">
+                    <div class="flex items-center justify-between text-gray-400">
+                        <span class="text-xs uppercase tracking-wider font-semibold">Pevný disk (Úložiště)</span>
+                        <i class="fa-solid fa-hard-drive text-amber-400"></i>
+                    </div>
+                    <div class="my-4 flex items-baseline space-x-2">
+                        <span class="text-3xl font-bold text-gray-100">99%</span>
+                        <span class="text-xs text-emerald-400">Bez chyb</span>
+                    </div>
+                    <div class="w-full bg-dark-700 rounded-full h-2 overflow-hidden">
+                        <div class="bg-amber-500 h-full rounded-full" style="width: 99%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions & Security Status -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 bg-dark-800 border border-gray-800 rounded-2xl p-6">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center space-x-2">
+                        <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i>
+                        <span>Co můžeme hned zlepšit</span>
+                    </h2>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between p-4 bg-dark-700/40 rounded-xl border border-gray-700/50 hover:border-blue-500/40 transition">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center shrink-0">
+                                    <i class="fa-solid fa-broom"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-medium text-sm">Smazat zbytečné dočasné soubory</h4>
+                                    <p class="text-xs text-gray-400">Našli jsme 1.4 GB starých zbytků po instalacích, které zabírají místo.</p>
+                                </div>
+                            </div>
+                            <button onclick="showAlert('Hotovo! Uvolnili jsme 1.4 GB místa na disku.', 'success')" class="px-4 py-2 bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white text-xs font-medium rounded-lg transition shrink-0">Uvolnit místo</button>
+                        </div>
+                        <div class="flex items-center justify-between p-4 bg-dark-700/40 rounded-xl border border-gray-700/50 hover:border-blue-500/40 transition">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
+                                    <i class="fa-solid fa-shield-virus"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-medium text-sm">Ochrana před viry a nebezpečnými soubory</h4>
+                                    <p class="text-xs text-gray-400">Ochrana běží na pozadí a hlídá vše, co stahujete nebo spouštíte.</p>
+                                </div>
+                            </div>
+                            <span class="text-xs text-emerald-400 font-medium px-2.5 py-1 bg-emerald-500/10 rounded-md shrink-0">Zapnuto</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Security Summary -->
+                <div class="bg-dark-800 border border-gray-800 rounded-2xl p-6 flex flex-col justify-between">
+                    <div>
+                        <h2 class="text-lg font-semibold mb-4 flex items-center space-x-2">
+                            <i class="fa-solid fa-shield text-blue-400"></i>
+                            <span>Rychlý přehled ochrany</span>
+                        </h2>
+                        <ul class="space-y-3 text-sm">
+                            <li class="flex items-center justify-between py-2 border-b border-gray-700/40">
+                                <span class="text-gray-300">Kontrola stažených souborů</span>
+                                <span class="text-emerald-400 font-medium flex items-center gap-1.5"><i class="fa-solid fa-check text-xs"></i> Zapnuto</span>
+                            </li>
+                            <li class="flex items-center justify-between py-2 border-b border-gray-700/40">
+                                <span class="text-gray-300">Hlídání spuštěných programů</span>
+                                <span class="text-emerald-400 font-medium flex items-center gap-1.5"><i class="fa-solid fa-check text-xs"></i> Zapnuto</span>
+                            </li>
+                            <li class="flex items-center justify-between py-2">
+                                <span class="text-gray-300">Váš seznam výjimek</span>
+                                <span id="exclusion-count-badge" class="text-blue-400 font-medium">3 položky</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <button onclick="switchTab('diagnostika')" class="w-full mt-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-xl transition shadow-lg shadow-blue-600/20">Spustit novou kontrolu PC</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: HARDWARE -->
+        <section id="tab-hardware" class="tab-content hidden space-y-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-xl font-bold">Stav součástek v počítači (Hardware)</h2>
+                    <p class="text-sm text-gray-400">Sledujte, jestli se počítač nepřehřívá a jak moc pracuje</p>
+                </div>
+                <div class="text-xs text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-500/20 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    <span>Živá data</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- CPU Detail -->
+                <div class="bg-dark-800 border border-gray-800 rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-blue-500/10 text-blue-400 rounded-xl flex items-center justify-center">
+                                <i class="fa-solid fa-microchip"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-sm">Procesor (AMD Ryzen 7)</h3>
+                                <p class="text-xs text-gray-400">Hlavní výpočetní jednotka</p>
+                            </div>
+                        </div>
+                        <span id="hw-cpu-val" class="font-bold text-blue-400">18%</span>
+                    </div>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between text-gray-400"><span>Teplota:</span> <span id="hw-cpu-temp" class="text-gray-200 font-medium">45 °C (V normě)</span></div>
+                        <div class="flex justify-between text-gray-400"><span>Rychlost práce:</span> <span class="text-gray-200 font-medium">4.2 GHz</span></div>
+                        <div class="flex justify-between text-gray-400"><span>Stav chlazení:</span> <span class="text-emerald-400 font-medium">Tichý chod</span></div>
+                    </div>
+                    <div class="w-full bg-dark-700 rounded-full h-2 mt-4 overflow-hidden">
+                        <div id="hw-cpu-bar" class="bg-blue-500 h-full rounded-full" style="width: 18%"></div>
+                    </div>
+                </div>
+
+                <!-- GPU Detail -->
+                <div class="bg-dark-800 border border-gray-800 rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-emerald-500/10 text-emerald-400 rounded-xl flex items-center justify-center">
+                                <i class="fa-solid fa-display"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-sm">Grafická karta (RTX 3070)</h3>
+                                <p class="text-xs text-gray-400">Obraz a počítačové hry</p>
+                            </div>
+                        </div>
+                        <span id="hw-gpu-val" class="font-bold text-emerald-400">8%</span>
+                    </div>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between text-gray-400"><span>Teplota:</span> <span id="hw-gpu-temp" class="text-gray-200 font-medium">38 °C (Chladná)</span></div>
+                        <div class="flex justify-between text-gray-400"><span>Grafická paměť:</span> <span class="text-gray-200 font-medium">2.1 / 8 GB</span></div>
+                        <div class="flex justify-between text-gray-400"><span>Ventilátory:</span> <span class="text-gray-200 font-medium">V klidu (30%)</span></div>
+                    </div>
+                    <div class="w-full bg-dark-700 rounded-full h-2 mt-4 overflow-hidden">
+                        <div id="hw-gpu-bar" class="bg-emerald-500 h-full rounded-full" style="width: 8%"></div>
+                    </div>
+                </div>
+
+                <!-- RAM Detail -->
+                <div class="bg-dark-800 border border-gray-800 rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-indigo-500/10 text-indigo-400 rounded-xl flex items-center justify-center">
+                                <i class="fa-solid fa-memory"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-sm">Operační paměť (16 GB)</h3>
+                                <p class="text-xs text-gray-400">Paměť pro otevřené programy</p>
+                            </div>
+                        </div>
+                        <span id="hw-ram-val" class="font-bold text-indigo-400">38%</span>
+                    </div>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between text-gray-400"><span>Aktuálně zabráno:</span> <span class="text-gray-200 font-medium">6.2 GB</span></div>
+                        <div class="flex justify-between text-gray-400"><span>Volno pro další práci:</span> <span class="text-gray-200 font-medium">9.8 GB</span></div>
+                        <div class="flex justify-between text-gray-400"><span>Stav modulů:</span> <span class="text-emerald-400 font-medium">100% funkční</span></div>
+                    </div>
+                    <div class="w-full bg-dark-700 rounded-full h-2 mt-4 overflow-hidden">
+                        <div id="hw-ram-bar" class="bg-indigo-500 h-full rounded-full" style="width: 38%"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: SOFTWARE -->
+        <section id="tab-software" class="tab-content hidden space-y-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-xl font-bold">Windows a nainstalované programy</h2>
+                    <p class="text-sm text-gray-400">Kontrola, zda jsou všechny důležité části systému správně spuštěné</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- System Services -->
+                <div class="bg-dark-800 border border-gray-800 rounded-2xl p-6">
+                    <h3 class="text-base font-semibold mb-4 flex items-center space-x-2">
+                        <i class="fa-solid fa-gear text-blue-400"></i>
+                        <span>Důležité funkce Windows</span>
+                    </h3>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between p-3 bg-dark-700/30 rounded-xl border border-gray-700/40">
+                            <div>
+                                <h4 class="font-medium text-sm">Aktualizace systému Windows</h4>
+                                <p class="text-xs text-gray-400">Zajišťuje nejnovější opravy a bezpečnost</p>
+                            </div>
+                            <span class="px-2.5 py-1 bg-emerald-500/10 text-emerald-400 text-xs font-medium rounded-md">Funguje</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-dark-700/30 rounded-xl border border-gray-700/40">
+                            <div>
+                                <h4 class="font-medium text-sm">Síťová brána (Firewall)</h4>
+                                <p class="text-xs text-gray-400">Chrání počítač před útoky z internetu</p>
+                            </div>
+                            <span class="px-2.5 py-1 bg-emerald-500/10 text-emerald-400 text-xs font-medium rounded-md">Funguje</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-dark-700/30 rounded-xl border border-gray-700/40">
+                            <div>
+                                <h4 class="font-medium text-sm">Štít proti nebezpečným programům</h4>
+                                <p class="text-xs text-gray-400">Hlídá spuštěné aplikace na pozadí</p>
+                            </div>
+                            <span class="px-2.5 py-1 bg-emerald-500/10 text-emerald-400 text-xs font-medium rounded-md">Funguje</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Driver Status -->
+                <div class="bg-dark-800 border border-gray-800 rounded-2xl p-6">
+                    <h3 class="text-base font-semibold mb-4 flex items-center space-x-2">
+                        <i class="fa-solid fa-plug text-indigo-400"></i>
+                        <span>Ovladače pro součástky PC</span>
+                    </h3>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between p-3 bg-dark-700/30 rounded-xl border border-gray-700/40">
+                            <div>
+                                <h4 class="font-medium text-sm">Ovladač grafické karty NVIDIA</h4>
+                                <p class="text-xs text-gray-400">Pro plynulý obraz a hry</p>
+                            </div>
+                            <span class="text-xs text-emerald-400 font-medium">V pořádku</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-dark-700/30 rounded-xl border border-gray-700/40">
+                            <div>
+                                <h4 class="font-medium text-sm">Ovladač základní desky AMD</h4>
+                                <p class="text-xs text-gray-400">Pro správnou komunikaci součástek</p>
+                            </div>
+                            <span class="text-xs text-emerald-400 font-medium">V pořádku</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-dark-700/30 rounded-xl border border-gray-700/40">
+                            <div>
+                                <h4 class="font-medium text-sm">Zvuková karta Realtek</h4>
+                                <p class="text-xs text-gray-400">Pro reproduktory a mikrofon</p>
+                            </div>
+                            <span class="text-xs text-emerald-400 font-medium">V pořádku</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: SPRÁVA SOUBORŮ A APLIKACÍ (EXCLUSION MANAGER) -->
+        <section id="tab-sprava" class="tab-content hidden space-y-6">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-xl font-bold">Povolené a blokované položky</h2>
+                    <p class="text-sm text-gray-400">Zde vidíte programy a soubory, u kterých jste nastavili vlastní pravidlo (jestli je má kontrola přeskakovat nebo hlídat).</p>
+                </div>
+                <button onclick="openAddModal()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl text-sm font-medium transition shadow-lg shadow-blue-600/20 flex items-center space-x-2 shrink-0">
+                    <i class="fa-solid fa-plus text-xs"></i>
+                    <span>Přidat vlastní položku</span>
+                </button>
+            </div>
+
+            <!-- Exclusions Table / List -->
+            <div class="bg-dark-800 border border-gray-800 rounded-2xl overflow-hidden shadow-xl">
+                <div class="p-4 border-b border-gray-800 bg-dark-700/30 grid grid-cols-12 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                    <span class="col-span-5">Název a kde se nachází</span>
+                    <span class="col-span-3">O co jde</span>
+                    <span class="col-span-2">Nastavení</span>
+                    <span class="col-span-2 text-right">Upravit</span>
+                </div>
+                <div id="exclusion-list" class="divide-y divide-gray-800">
+                    <!-- Dynamic Items will be inserted here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 5: DIAGNOSTICKÁ KONTROLA -->
+        <section id="tab-diagnostika" class="tab-content hidden space-y-6">
+            <div class="bg-dark-800 border border-gray-800 rounded-2xl p-6 sm:p-8 max-w-4xl mx-auto">
+                <div class="text-center mb-8">
+                    <div class="w-16 h-16 bg-blue-600/10 text-blue-500 rounded-2xl mx-auto flex items-center justify-center text-2xl mb-4 shadow-inner">
+                        <i id="scan-icon" class="fa-solid fa-magnifying-glass"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold mb-2">Co chcete v počítači zkontrolovat?</h2>
+                    <p class="text-gray-400 text-sm">Vyberte si jednu ze tří možností níže a pak klikněte na Spustit kontrolu.</p>
+                </div>
+
+                <!-- 3-WAY MODE SELECTOR -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                    <!-- Option 1: Pouze soubory -->
+                    <button type="button" onclick="setScanMode('files')" id="mode-btn-files" class="scan-mode-card p-4 rounded-2xl border-2 border-gray-700 bg-dark-900/60 hover:border-blue-500/50 text-left transition flex flex-col justify-between">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-lg">
+                                <i class="fa-solid fa-folder-open"></i>
+                            </div>
+                            <span id="check-files" class="w-5 h-5 rounded-full border border-gray-600 flex items-center justify-center text-xs text-transparent">
+                                <i class="fa-solid fa-check"></i>
+                            </span>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-base text-gray-100">Pouze soubory</h3>
+                            <p class="text-xs text-gray-400 mt-1">Zkontroluje dokumenty, fotky, videa a stažené soubory.</p>
+                        </div>
+                    </button>
+
+                    <!-- Option 2: Pouze programy / app -->
+                    <button type="button" onclick="setScanMode('apps')" id="mode-btn-apps" class="scan-mode-card p-4 rounded-2xl border-2 border-gray-700 bg-dark-900/60 hover:border-blue-500/50 text-left transition flex flex-col justify-between">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-lg">
+                                <i class="fa-solid fa-window-restore"></i>
+                            </div>
+                            <span id="check-apps" class="w-5 h-5 rounded-full border border-gray-600 flex items-center justify-center text-xs text-transparent">
+                                <i class="fa-solid fa-check"></i>
+                            </span>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-base text-gray-100">Pouze programy</h3>
+                            <p class="text-xs text-gray-400 mt-1">Zkontroluje nainstalované hry, aplikace a běžící procesy.</p>
+                        </div>
+                    </button>
+
+                    <!-- Option 3: Obě dvě -->
+                    <button type="button" onclick="setScanMode('both')" id="mode-btn-both" class="scan-mode-card p-4 rounded-2xl border-2 border-blue-500 bg-blue-600/10 text-left transition flex flex-col justify-between shadow-lg shadow-blue-500/10">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg">
+                                <i class="fa-solid fa-layer-group"></i>
+                            </div>
+                            <span id="check-both" class="w-5 h-5 rounded-full bg-blue-500 border border-blue-500 flex items-center justify-center text-xs text-white">
+                                <i class="fa-solid fa-check"></i>
+                            </span>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="font-bold text-base text-white">Obě dvě</h3>
+                                <span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-blue-500/20 text-blue-300">Doporučeno</span>
+                            </div>
+                            <p class="text-xs text-gray-300 mt-1">Kompletní kontrola souborů i všech programů najednou.</p>
+                        </div>
+                    </button>
+                </div>
+
+                <!-- Scan Progress Area (Hidden by default) -->
+                <div id="scan-progress-box" class="hidden space-y-3 mb-6 text-left bg-dark-900/70 p-4 rounded-xl border border-gray-800">
+                    <div class="flex justify-between text-sm">
+                        <span id="scan-status-text" class="text-blue-400 font-medium">Připravuji kontrolu...</span>
+                        <span id="scan-percent" class="text-gray-300 font-bold">0%</span>
+                    </div>
+                    <div class="w-full bg-dark-700 rounded-full h-3 overflow-hidden">
+                        <div id="scan-progress-bar" class="bg-blue-600 h-full rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Action Button -->
+                <div class="text-center">
+                    <button id="run-scan-btn" onclick="startSystemScan()" class="w-full sm:w-auto px-8 py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl transition shadow-lg shadow-blue-600/30 flex items-center justify-center space-x-2 mx-auto">
+                        <i class="fa-solid fa-play"></i>
+                        <span>Spustit kontrolu (Soubory i programy)</span>
+                    </button>
+                </div>
+
+                <!-- RESULTS LIST: Nalezené soubory a programy -->
+                <div id="scan-results-container" class="hidden mt-8 pt-6 border-t border-gray-800 text-left space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div>
+                            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-list-check text-blue-400"></i>
+                                <span>Výsledky kontroly — co jsme v PC našli</span>
+                            </h3>
+                            <p class="text-xs text-gray-400">U každé položky vidíte, o jaký soubor nebo program jde, kde leží a můžete ho jedním kliknutím vyřešit.</p>
+                        </div>
+                        <span id="results-summary-badge" class="text-xs font-medium px-3 py-1.5 rounded-lg bg-dark-700 text-gray-300 self-start sm:self-auto">Nalezeno položek: 0</span>
+                    </div>
+
+                    <div id="scan-results-list" class="space-y-3">
+                        <!-- Found items will render here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal for Adding Exclusion -->
+    <div id="add-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-dark-800 border border-gray-700 rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <h3 class="text-lg font-bold mb-2 flex items-center space-x-2">
+                <i class="fa-solid fa-shield-plus text-blue-400"></i>
+                <span>Přidat vlastní položku</span>
+            </h3>
+            <p class="text-xs text-gray-400 mb-4">Zadejte název programu nebo souboru, který má kontrola vynechávat.</p>
+            <form id="exclusion-form" onsubmit="handleAddExclusion(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 uppercase mb-1.5">Název nebo umístění v PC</label>
+                    <input type="text" id="item-name" required placeholder="např. Hra.exe nebo C:\Dokumenty\smlouva.pdf" class="w-full bg-dark-900 border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-blue-500 transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 uppercase mb-1.5">Vyberte, o co jde</label>
+                    <select id="item-type" class="w-full bg-dark-900 border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-blue-500 transition">
+                        <option value="app">Program / Aplikace (.exe)</option>
+                        <option value="file">Soubor nebo složka (Dokument, Fotka...)</option>
+                    </select>
+                </div>
+                <div class="flex items-center space-x-3 pt-2">
+                    <button type="button" onclick="closeAddModal()" class="flex-1 px-4 py-2.5 bg-dark-700 hover:bg-dark-600 text-gray-300 font-semibold text-sm rounded-xl transition">Zrušit</button>
+                    <button type="submit" class="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm rounded-xl transition shadow-lg shadow-blue-600/20">Uložit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-t border-gray-800/80 py-4 text-center text-xs text-gray-500">
+        PC Health & Guard Pro &copy; 2026 — Jednoduchá kontrola počítače, souborů a programů
+    </footer>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // Selected Scan Mode: 'files' | 'apps' | 'both'
+        let currentScanMode = 'both';
+
+        // User Exclusions State
+        let exclusions = [
+            { id: 1, name: "Steam (Herní klient)", path: "C:\\Program Files\\Steam\\steam.exe", type: "app", excluded: true },
+            { id: 2, name: "Záloha fotek z dovolené", path: "D:\\Fotky\\Dovolena_2025.zip", type: "file", excluded: true },
+            { id: 3, name: "Střih videa (Premiere)", path: "C:\\Program Files\\Adobe\\Premiere.exe", type: "app", excluded: false }
+        ];
+
+        // Database of realistic items found during a scan so the user sees exact file types & locations
+        const sampleScanItems = [
+            {
+                id: 'f1',
+                category: 'file',
+                name: 'Faktura_2026_04.pdf',
+                typeLabel: 'Dokument PDF',
+                icon: 'fa-file-pdf text-rose-400',
+                size: '1.2 MB',
+                path: 'C:\\Users\\Uzivatel\\Dokumenty\\Faktury\\',
+                status: 'ok',
+                statusText: 'V pořádku'
+            },
+            {
+                id: 'f2',
+                category: 'file',
+                name: 'Instalator_neznamy_balicek.exe',
+                typeLabel: 'Instalační soubor (EXE)',
+                icon: 'fa-file-zipper text-amber-400',
+                size: '48.5 MB',
+                path: 'C:\\Users\\Uzivatel\\Stažené soubory\\',
+                status: 'warning',
+                statusText: 'Podezřelý soubor'
+            },
+            {
+                id: 'f3',
+                category: 'file',
+                name: 'Rodinna_oslava.jpg',
+                typeLabel: 'Obrázek / Fotka (JPG)',
+                icon: 'fa-file-image text-emerald-400',
+                size: '4.8 MB',
+                path: 'C:\\Users\\Uzivatel\\Obrázky\\',
+                status: 'ok',
+                statusText: 'V pořádku'
+            },
+            {
+                id: 'f4',
+                category: 'file',
+                name: 'stare_docasne_data.tmp',
+                typeLabel: 'Zbytečný dočasný soubor',
+                icon: 'fa-file-lines text-gray-400',
+                size: '840 MB',
+                path: 'C:\\Windows\\Temp\\',
+                status: 'slow',
+                statusText: 'Zbytečně zabírá místo'
+            },
+            {
+                id: 'a1',
+                category: 'app',
+                name: 'Google Chrome (Prohlížeč)',
+                typeLabel: 'Nainstalovaný program',
+                icon: 'fa-globe text-blue-400',
+                size: '310 MB',
+                path: 'C:\\Program Files\\Google\\Chrome\\chrome.exe',
+                status: 'ok',
+                statusText: 'V pořádku'
+            },
+            {
+                id: 'a2',
+                category: 'app',
+                name: 'Automatický pomocník při startu',
+                typeLabel: 'Program na pozadí',
+                icon: 'fa-rocket text-amber-400',
+                size: '95 MB',
+                path: 'C:\\Program Files (x86)\\HelperTool\\helper.exe',
+                status: 'slow',
+                statusText: 'Zpomaluje start PC'
+            },
+            {
+                id: 'a3',
+                category: 'app',
+                name: 'Neznámý reklama-doplněk',
+                typeLabel: 'Aplikace / Doplněk',
+                icon: 'fa-bug text-rose-400',
+                size: '14 MB',
+                path: 'C:\\Users\\Uzivatel\\AppData\\Local\\AdPopup\\run.exe',
+                status: 'warning',
+                statusText: 'Podezřelý program'
+            },
+            {
+                id: 'a4',
+                category: 'app',
+                name: 'Spotify (Hudba)',
+                typeLabel: 'Nainstalovaný program',
+                icon: 'fa-music text-emerald-400',
+                size: '165 MB',
+                path: 'C:\\Users\\Uzivatel\\AppData\\Roaming\\Spotify\\Spotify.exe',
+                status: 'ok',
+                statusText: 'V pořádku'
+            }
+        ];
+
+        // Select Scan Mode ('files', 'apps', 'both')
+        function setScanMode(mode) {
+            currentScanMode = mode;
+            const modes = ['files', 'apps', 'both'];
+            
+            modes.forEach(m => {
+                const btn = document.getElementById('mode-btn-' + m);
+                const check = document.getElementById('check-' + m);
+                if (m === mode) {
+                    btn.className = "scan-mode-card p-4 rounded-2xl border-2 border-blue-500 bg-blue-600/10 text-left transition flex flex-col justify-between shadow-lg shadow-blue-500/10";
+                    check.className = "w-5 h-5 rounded-full bg-blue-500 border border-blue-500 flex items-center justify-center text-xs text-white";
+                } else {
+                    btn.className = "scan-mode-card p-4 rounded-2xl border-2 border-gray-700 bg-dark-900/60 hover:border-blue-500/50 text-left transition flex flex-col justify-between";
+                    check.className = "w-5 h-5 rounded-full border border-gray-600 flex items-center justify-center text-xs text-transparent";
+                }
+            });
+
+            const runBtn = document.getElementById('run-scan-btn');
+            if (mode === 'files') {
+                runBtn.innerHTML = `<i class="fa-solid fa-play"></i> <span>Spustit kontrolu (Pouze soubory)</span>`;
+            } else if (mode === 'apps') {
+                runBtn.innerHTML = `<i class="fa-solid fa-play"></i> <span>Spustit kontrolu (Pouze programy)</span>`;
+            } else {
+                runBtn.innerHTML = `<i class="fa-solid fa-play"></i> <span>Spustit kontrolu (Soubory i programy)</span>`;
+            }
+        }
+
+        // Tab Navigation
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = "tab-btn px-4 py-2 rounded-lg text-sm font-medium transition flex items-center space-x-2 text-gray-400 hover:text-gray-200 hover:bg-dark-700/50";
+            });
+
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+            const activeBtn = document.getElementById('nav-' + tabId);
+            if(activeBtn) {
+                activeBtn.className = "tab-btn px-4 py-2 rounded-lg text-sm font-medium transition flex items-center space-x-2 bg-blue-600/20 text-blue-400 border border-blue-500/30";
+            }
+        }
+
+        // Render Exclusions List
+        function renderExclusions() {
+            const listContainer = document.getElementById('exclusion-list');
+            listContainer.innerHTML = '';
+
+            if(exclusions.length === 0) {
+                listContainer.innerHTML = `<div class="p-6 text-center text-gray-500 text-sm">Zatím zde nemáte žádné vlastní položky.</div>`;
+                document.getElementById('exclusion-count-badge').innerText = `0 položek`;
+                return;
+            }
+
+            exclusions.forEach(item => {
+                const row = document.createElement('div');
+                row.className = "p-4 grid grid-cols-12 items-center gap-2 text-sm hover:bg-dark-700/20 transition";
+                
+                const typeBadge = item.type === 'app' 
+                    ? '<span class="inline-flex items-center gap-1.5 text-xs text-blue-400 bg-blue-500/10 px-2.5 py-1 rounded-md"><i class="fa-solid fa-window-maximize"></i> Program</span>' 
+                    : '<span class="inline-flex items-center gap-1.5 text-xs text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-md"><i class="fa-solid fa-file"></i> Soubor</span>';
+                
+                row.innerHTML = `
+                    <div class="col-span-5 pr-2">
+                        <div class="font-medium text-gray-200 truncate">${item.name}</div>
+                        <div class="text-xs text-gray-500 font-mono truncate">${item.path || item.name}</div>
+                    </div>
+                    <div class="col-span-3">${typeBadge}</div>
+                    <div class="col-span-2">
+                        <span class="px-2.5 py-1 text-xs font-medium rounded-full ${item.excluded ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'}">
+                            ${item.excluded ? 'Přeskakovat' : 'Kontrolovat'}
+                        </span>
+                    </div>
+                    <div class="col-span-2 flex items-center justify-end space-x-2">
+                        <button onclick="toggleExclusion(${item.id})" class="px-2.5 py-1 bg-dark-700 hover:bg-dark-600 text-xs rounded-lg text-gray-300 transition">
+                            ${item.excluded ? 'Hlídat' : 'Vynechat'}
+                        </button>
+                        <button onclick="removeExclusion(${item.id})" class="p-1.5 text-gray-500 hover:text-red-400 transition" title="Odstranit ze seznamu">
+                            <i class="fa-solid fa-trash-can text-xs"></i>
+                        </button>
+                    </div>
+                `;
+                listContainer.appendChild(row);
+            });
+
+            const excludedCount = exclusions.filter(e => e.excluded).length;
+            document.getElementById('exclusion-count-badge').innerText = `${excludedCount} položek`;
+        }
+
+        function toggleExclusion(id) {
+            const item = exclusions.find(e => e.id === id);
+            if(item) {
+                item.excluded = !item.excluded;
+                renderExclusions();
+                showAlert(`Nastavení pro "${item.name}" bylo změněno.`, 'success');
+            }
+        }
+
+        function removeExclusion(id) {
+            exclusions = exclusions.filter(e => e.id !== id);
+            renderExclusions();
+            showAlert('Položka byla ze seznamu odstraněna.', 'info');
+        }
+
+        // Modal Handlers
+        function openAddModal() {
+            document.getElementById('add-modal').classList.remove('hidden');
+        }
+
+        function closeAddModal() {
+            document.getElementById('add-modal').classList.add('hidden');
+            document.getElementById('exclusion-form').reset();
+        }
+
+        function handleAddExclusion(e) {
+            e.preventDefault();
+            const rawInput = document.getElementById('item-name').value.trim();
+            const type = document.getElementById('item-type').value;
+
+            exclusions.push({
+                id: Date.now(),
+                name: rawInput.split('\\').pop(),
+                path: rawInput,
+                type: type,
+                excluded: true
+            });
+
+            renderExclusions();
+            closeAddModal();
+            showAlert('Položka byla přidána do vašeho seznamu.', 'success');
+        }
+
+        // Toast Notification System
+        function showAlert(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const bgColor = type === 'success' ? 'bg-emerald-600/95' : 'bg-blue-600/95';
+            toast.className = `${bgColor} text-white px-4 py-3 rounded-xl shadow-xl text-xs font-medium flex items-center space-x-2 backdrop-blur border border-white/10`;
+            toast.innerHTML = `<i class="fa-solid fa-circle-check"></i> <span>${message}</span>`;
+            
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        // Simulated Live Hardware Telemetry
+        setInterval(() => {
+            const cpuVar = Math.floor(Math.random() * 15) + 12;
+            const ramVar = (6.0 + Math.random() * 0.4).toFixed(1);
+            const ramPercent = Math.round((ramVar / 16) * 100);
+            const cpuTemp = 42 + Math.floor(Math.random() * 6);
+            const gpuTemp = 36 + Math.floor(Math.random() * 5);
+            const gpuVal = Math.floor(Math.random() * 10) + 5;
+
+            document.getElementById('overview-cpu').innerText = cpuVar + '%';
+            document.getElementById('bar-cpu').style.width = cpuVar + '%';
+            
+            document.getElementById('overview-ram').innerText = ramVar;
+            document.getElementById('bar-ram').style.width = ramPercent + '%';
+
+            if(document.getElementById('hw-cpu-val')) {
+                document.getElementById('hw-cpu-val').innerText = cpuVar + '%';
+                document.getElementById('hw-cpu-bar').style.width = cpuVar + '%';
+                document.getElementById('hw-cpu-temp').innerText = cpuTemp + ' °C (V normě)';
+
+                document.getElementById('hw-gpu-val').innerText = gpuVal + '%';
+                document.getElementById('hw-gpu-bar').style.width = gpuVal + '%';
+                document.getElementById('hw-gpu-temp').innerText = gpuTemp + ' °C (Chladná)';
+
+                document.getElementById('hw-ram-val').innerText = ramPercent + '%';
+                document.getElementById('hw-ram-bar').style.width = ramPercent + '%';
+            }
+        }, 2000);
+
+        // Diagnostic Scan Simulator
+        function startSystemScan() {
+            const btn = document.getElementById('run-scan-btn');
+            const progressBox = document.getElementById('scan-progress-box');
+            const resultsContainer = document.getElementById('scan-results-container');
+            const progressBar = document.getElementById('scan-progress-bar');
+            const progressPercent = document.getElementById('scan-percent');
+            const statusText = document.getElementById('scan-status-text');
+            const icon = document.getElementById('scan-icon');
+
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+            progressBox.classList.remove('hidden');
+            resultsContainer.classList.add('hidden');
+            icon.className = "fa-solid fa-spinner fa-spin text-blue-500";
+
+            let progress = 0;
+            const steps = currentScanMode === 'files' 
+                ? ["Prohledávám dokumenty a obrázky...", "Kontroluji stažené soubory...", "Hledám zbytečné dočasné soubory...", "Dokončuji přehled souborů..."]
+                : currentScanMode === 'apps'
+                ? ["Kontroluji nainstalované programy...", "Prověřuji aplikace spouštěné při startu...", "Hledám podezřelé doplňky...", "Dokončuji přehled programů..."]
+                : ["Prohledávám dokumenty a stažené soubory...", "Kontroluji nainstalované programy a hry...", "Prověřuji součástky počítače...", "Sestavuji kompletní výsledky..."];
+
+            const interval = setInterval(() => {
+                progress += 10;
+                progressBar.style.width = progress + '%';
+                progressPercent.innerText = progress + '%';
+
+                const stepIndex = Math.min(Math.floor((progress / 100) * steps.length), steps.length - 1);
+                statusText.innerText = steps[stepIndex];
+
+                if(progress >= 100) {
+                    clearInterval(interval);
+                    statusText.innerText = "Kontrola je hotová! Níže vidíte, co jsme našli.";
+                    icon.className = "fa-solid fa-circle-check text-emerald-400";
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    setScanMode(currentScanMode);
+                    renderScanResults();
+                    showAlert('Kontrola byla úspěšně dokončena.', 'success');
+                }
+            }, 160);
+        }
+
+        // Render found files/apps based on selected mode
+        function renderScanResults() {
+            const container = document.getElementById('scan-results-container');
+            const list = document.getElementById('scan-results-list');
+            const badge = document.getElementById('results-summary-badge');
+
+            container.classList.remove('hidden');
+            list.innerHTML = '';
+
+            // Filter items according to user choice ('files', 'apps', or 'both')
+            const filtered = sampleScanItems.filter(item => {
+                if (currentScanMode === 'files') return item.category === 'file';
+                if (currentScanMode === 'apps') return item.category === 'app';
+                return true;
+            });
+
+            badge.innerText = `Nalezeno položek: ${filtered.length}`;
+
+            filtered.forEach(item => {
+                const card = document.createElement('div');
+                card.id = 'result-card-' + item.id;
+                
+                let statusBadge = '';
+                let actionButtons = '';
+
+                if (item.status === 'ok') {
+                    statusBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"><i class="fa-solid fa-check mr-1"></i>${item.statusText}</span>`;
+                    actionButtons = `
+                        <button onclick="allowItemFromScan('${item.id}')" class="px-3 py-1.5 bg-dark-700 hover:bg-dark-600 text-gray-300 text-xs font-medium rounded-lg transition">Povolit navždy</button>
+                    `;
+                } else if (item.status === 'warning') {
+                    statusBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20"><i class="fa-solid fa-triangle-exclamation mr-1"></i>${item.statusText}</span>`;
+                    actionButtons = `
+                        <button onclick="allowItemFromScan('${item.id}')" class="px-3 py-1.5 bg-dark-700 hover:bg-dark-600 text-gray-300 text-xs font-medium rounded-lg transition">Věřím tomu</button>
+                        <button onclick="resolveResultItem('${item.id}', 'smazána a zablokována')" class="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-medium rounded-lg transition">Smazat</button>
+                    `;
+                } else {
+                    statusBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20"><i class="fa-solid fa-clock mr-1"></i>${item.statusText}</span>`;
+                    actionButtons = `
+                        <button onclick="allowItemFromScan('${item.id}')" class="px-3 py-1.5 bg-dark-700 hover:bg-dark-600 text-gray-300 text-xs font-medium rounded-lg transition">Ponechat</button>
+                        <button onclick="resolveResultItem('${item.id}', 'vyčištěna a opravena')" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium rounded-lg transition">Opravit</button>
+                    `;
+                }
+
+                card.className = "p-4 bg-dark-900/80 border border-gray-800 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-gray-700 transition";
+                card.innerHTML = `
+                    <div class="flex items-start space-x-3.5">
+                        <div class="w-10 h-10 rounded-xl bg-dark-800 border border-gray-700/70 flex items-center justify-center text-lg shrink-0 mt-0.5">
+                            <i class="fa-solid ${item.icon}"></i>
+                        </div>
+                        <div>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <h4 class="font-semibold text-sm text-gray-100">${item.name}</h4>
+                                <span class="text-[11px] px-2 py-0.5 rounded bg-dark-700 text-gray-300 font-medium">${item.typeLabel}</span>
+                                <span class="text-xs text-gray-500">• ${item.size}</span>
+                            </div>
+                            <p class="text-xs text-gray-400 font-mono mt-1 break-all">Umístění: ${item.path}</p>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-800">
+                        ${statusBadge}
+                        <div class="flex items-center space-x-2">
+                            ${actionButtons}
+                        </div>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        function resolveResultItem(itemId, actionText) {
+            const card = document.getElementById('result-card-' + itemId);
+            const item = sampleScanItems.find(i => i.id === itemId);
+            if (card && item) {
+                card.innerHTML = `
+                    <div class="flex items-center justify-between w-full text-xs text-emerald-400 py-1">
+                        <span class="flex items-center gap-2"><i class="fa-solid fa-circle-check"></i> Položka <strong>${item.name}</strong> byla úspěšně ${actionText}.</span>
+                    </div>
+                `;
+                card.className = "p-3.5 bg-emerald-500/5 border border-emerald-500/20 rounded-xl";
+                showAlert(`Hotovo: ${item.name} (${actionText}).`, 'success');
+            }
+        }
+
+        function allowItemFromScan(itemId) {
+            const item = sampleScanItems.find(i => i.id === itemId);
+            if (item) {
+                exclusions.push({
+                    id: Date.now(),
+                    name: item.name,
+                    path: item.path + (item.path.endsWith('\\') ? item.name : ''),
+                    type: item.category,
+                    excluded: true
+                });
+                renderExclusions();
+                resolveResultItem(itemId, 'přidána mezi povolené položky');
+            }
+        }
+
+        // Initialize on load
+        window.onload = function() {
+            renderExclusions();
+            setScanMode('both');
+        };
+    </script>
+</body>
+</html>
